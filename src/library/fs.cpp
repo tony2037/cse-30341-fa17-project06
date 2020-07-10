@@ -22,6 +22,14 @@ void FileSystem::debug(Disk *disk) {
     printf("    %u inodes\n"         , block.Super.Inodes);
 
     // Read Inode blocks
+    for (size_t i = 0; i < (sizeof(block.Inodes)/sizeof(Inode)); i++) {
+        Inode inode = block.Inodes[i];
+        if (inode.Valid) {
+            printf("Inode: %u\n", i);
+            printf("    size: %u\n", inode.Size);
+            printf("    direct blocks: %u\n", sizeof(inode.Direct));
+        }
+    }
 }
 
 // Format file system ----------------------------------------------------------
