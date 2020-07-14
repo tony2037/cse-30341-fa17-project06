@@ -3,6 +3,7 @@
 #include "sfs/fs.h"
 
 #include <algorithm>
+#include <vector>
 
 #include <assert.h>
 #include <stdio.h>
@@ -17,21 +18,39 @@ void FileSystem::debug(Disk *disk) {
     disk->read(0, block.Data);
 
     printf("SuperBlock:\n");
+
+    if (block.Super.MagicNumber == FileSystem::MAGIC_NUMBER) {
+        printf("    magic number is valid\n");
+    }
+    else {
+        printf("    magic number is not valid\n");
+        return;
+    }
+
     printf("    %u blocks\n"         , block.Super.Blocks);
     printf("    %u inode blocks\n"   , block.Super.InodeBlocks);
     printf("    %u inodes\n"         , block.Super.Inodes);
 
     // Read Inode blocks
-    int InodeCount = 0;
     for (size_t i = 0; i < block.Super.InodeBlocks; i++) {
         Block InodeBlock;
         disk->read(i + 1, InodeBlock.Data);
         for (size_t j = 0; j < INODES_PER_BLOCK; j++) {
             if (InodeBlock.Inodes[j].Valid) {
-                printf("Inode %u:\n", InodeCount);
-                printf("    size: %u\n", InodeBlock.Inodes[j].Size);
-                printf("    direct blocks: %u\n", (sizeof(InodeBlock.Inodes[j].Direct[0]) / sizeof(InodeBlock.Inodes[j].Direct)));
-                InodeCount++;
+                printf("Inode %zu:\n", i * FileSystem::INODES_PER_BLOCK + j);
+                printf("    size: %u bytes\n", InodeBlock.Inodes[j].Size);
+
+                std::vector<uint32_t> directBlocks;
+                for (size_t k = 0; k < POINTERS_PER_INODE; k++) {
+                    if (InodeBlock.Inodes[j].Direct[k] != 0) {
+                        directBlocks.push_back(InodeBlock.Inodes[j].Direct[k]);
+                    }
+                }
+                if (!directBlocks.empty()) {
+                    printf("    direct blocks:");
+                    for (uint32_t directBlock : directBlocks) {printf(" %u", directBlock);}
+                    printf("\n");
+                }
             }
         }
     }
