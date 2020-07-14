@@ -22,12 +22,17 @@ void FileSystem::debug(Disk *disk) {
     printf("    %u inodes\n"         , block.Super.Inodes);
 
     // Read Inode blocks
-    for (size_t i = 0; i < (sizeof(block.Inodes)/sizeof(Inode)); i++) {
-        Inode inode = block.Inodes[i];
-        if (inode.Valid) {
-            printf("Inode: %u\n", i);
-            printf("    size: %u\n", inode.Size);
-            printf("    direct blocks: %u\n", sizeof(inode.Direct));
+    int InodeCount = 0;
+    for (size_t i = 0; i < block.Super.InodeBlocks; i++) {
+        Block InodeBlock;
+        disk->read(i + 1, InodeBlock.Data);
+        for (size_t j = 0; j < INODES_PER_BLOCK; j++) {
+            if (InodeBlock.Inodes[j].Valid) {
+                printf("Inode %u:\n", InodeCount);
+                printf("    size: %u\n", InodeBlock.Inodes[j].Size);
+                printf("    direct blocks: %u\n", (sizeof(InodeBlock.Inodes[j].Direct[0]) / sizeof(InodeBlock.Inodes[j].Direct)));
+                InodeCount++;
+            }
         }
     }
 }
@@ -36,8 +41,15 @@ void FileSystem::debug(Disk *disk) {
 
 bool FileSystem::format(Disk *disk) {
     // Write superblock
+    Block block;
 
-    // Clear all other blocks
+    // Read Superblock
+    disk->read(0, block.Data);
+
+    block.Super.MagicNumber = 0xf0f03410;
+    uint32_t NewInodesBlocks = block.Super.Blocks * 0.1;
+
+    // Clear all otherp blocks
     return true;
 }
 
