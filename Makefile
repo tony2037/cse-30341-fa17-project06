@@ -13,6 +13,8 @@ SHELL_SOURCE=	$(wildcard src/shell/*.cpp)
 SHELL_OBJECTS=	$(SHELL_SOURCE:.cpp=.o)
 SHELL_PROGRAM=	bin/sfssh
 
+RECOVERY= $(wildcard recovery/*)
+
 all:    $(LIB_STATIC) $(SHELL_PROGRAM)
 
 %.o:	%.cpp $(LIB_HEADERS)
@@ -28,6 +30,7 @@ test:	$(SHELL_PROGRAM)
 	@for test_script in tests/test_*.sh; do $${test_script}; done
 
 clean:
-	rm -f $(LIB_OBJECTS) $(LIB_STATIC) $(SHELL_OBJECTS) $(SHELL_PROGRAM)
+	rm -f $(LIB_OBJECTS) $(LIB_STATIC) $(SHELL_OBJECTS) $(SHELL_PROGRAM) *.txt
+	cp $(RECOVERY) data/.
 
 .PHONY: all clean
