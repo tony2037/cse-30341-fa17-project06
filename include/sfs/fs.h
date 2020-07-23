@@ -37,7 +37,9 @@ private:
 
     // TODO: Internal helper functions
 
+private:
     // TODO: Internal member variables
+    static struct SuperBlock SB;
 
 public:
     static void debug(Disk *disk);
