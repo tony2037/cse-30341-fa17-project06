@@ -11,11 +11,14 @@
 
 // Debug file system -----------------------------------------------------------
 
+
+FileSystem::SuperBlock FileSystem::SB;
 void FileSystem::debug(Disk *disk) {
     Block block;
 
     // Read Superblock
-    disk->read(0, block.Data);
+    if (SB.MagicNumber != MAGIC_NUMBER) {disk->read(0, block.Data); SB = block.Super;}
+    else block.Super = SB;
 
     printf("SuperBlock:\n");
 
@@ -77,12 +80,25 @@ bool FileSystem::format(Disk *disk) {
     Block block;
 
     // Read Superblock
-    disk->read(0, block.Data);
+    if (SB.MagicNumber != MAGIC_NUMBER) {disk->read(0, block.Data); SB = block.Super;}
+    else block.Super = SB;
 
-    block.Super.MagicNumber = 0xf0f03410;
-    uint32_t NewInodesBlocks = block.Super.Blocks * 0.1;
+    if (block.Super.MagicNumber != FileSystem::MAGIC_NUMBER) {
+        printf("magic number is not valid\n");
+        return false;
+    }
 
-    // Clear all otherp blocks
+    for (size_t i = 1; i < block.Super.Blocks; i++) {
+        char data[Disk::BLOCK_SIZE] = {0};
+        disk->write(i, data);
+    }
+
+    block.Super.InodeBlocks = 0.1 * block.Super.Blocks;
+    block.Super.InodeBlocks = (block.Super.Blocks - block.Super.InodeBlocks * 10) > 0 ?
+                                block.Super.InodeBlocks + 1 : block.Super.InodeBlocks;
+    disk->write(0, block.Data);
+    SB = block.Super;
+
     return true;
 }
 
